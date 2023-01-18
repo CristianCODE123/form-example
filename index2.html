@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+
+  </script>
+  <!-- CSS only -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+  <title>Document</title>
+</head>
+<body>
+  
+</body>
+</html>
+
+
+<?php
+error_reporting(E_ALL);
+/**
+	* ARCHIVO DE SOLICITUD DE CAMBIOS
+	* @author Harenson henao
+	* @modified Leyner Guzman
+	* 
+	* 
+	* Archivo formulario para la solicitud de cambios en el sistema
+	*
+*/
+!isset($_SESSION) ? session_start() : '';
+header('Content-type: text/html; charset=utf-8');
+$server = '//' . $_SERVER['SERVER_NAME'] . '/sistemabdr/';
+$root = $_SERVER['DOCUMENT_ROOT'] . '/sistemabdr/';
+
+if (!isset($_SESSION, $_SESSION['nombre_usuario'])) {
+    header('Location: ' . $server);
+}
+
+require_once("{$root}administrador/rednodo/cambios/class.cambios.php");
+
+$cambio = new Cambio();
+$usuario = htmlentities($_SESSION['nombre_usuario']); /** usuario logueado actualmente*/
+$operaciones_object = $cambio->operations();
+$operaciones = $operaciones_object['data'];
+
+?>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+
+
+    <title>Cambios - solicitar cambio</title>
+    <link rel="stylesheet" href="<?= $server ?>funciones/assets/css/bootstrap.min.css" />
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+
+<style>
+
+
+  
+</style>
+<div class ="content-section" style = "width:800px;margin-left:30em;height:300px">
+<div class="container">
+<div class = "div-opciones" id = "div-opciones" >
+<h1 id = "principal-h1" style = "margin-top:1em;margin-left:7em;">Solicitar cambio</h1>
+
+    <form action="<?= $server; ?>administrador/rednodo/cambios/class.cambios.php" method="POST" enctype="multipart/form-data" id="form_solicitar" class="formulario">
+                <div style = "margin-left:9em;">
+                
+
+              <div style = "display:flex;" id = "opciones-container">
+
+              <div style = "width:100px">
+                
+                <h6 style = "margin-left:7em;font-size:14px;">Entidad</h6>
+                <?php $result= query("select * from (Select nit, razon_social from grt_ingreso_convenios union select nit_entidad, nombre_entidad from rep_entidad where id_perfil_entidad=1) as a group by nit order by razon_social",$conn); ?>
+                <td class="aleft">
+
+                <select id="entidad" name="entidad" class="form-select" aria-label="Default select example"  style = "width:270px;height:40px;">
+            
+
+                <option value="" selected>Seleccione...</option>
+                    <?php while($row= fetch_array($result)){
+                                echo "<option value='".$row['nit']."'>".$row['razon_social']."</option>";
+                           }
+                    ?>  
+                        
+                       
+  
+                  </select>
+                
+                
+                
+                
+                </div>
+
+
+
+              <div style = "width:100px;margin-left:15em;">
+              <h6 style = "margin-left:6em;font-size:14px;">Operacion</h6>
+                  <td class="aleft">
+                  
+                  <select onchange ="seleccionar();" id="operacion_id" name="operacion_id" class="form-select" aria-label="Default select example"  style = "width:270px;height:40px;">
+            
+
+                    <option value="" selected>Seleccione...</option>
+                          <?php foreach($operaciones as $operacion){ ?>
+                              <option value="<?php echo $cambio::strip_slashes($operacion['id']) ?>">
+                                  <?php echo  $cambio::strip_slashes($operacion['nombre']) ?>
+                              </option>
+                          <?php } ?>
+                        
+                       
+  
+                  </select>
+
+                      
+                  </td>
+              </div>
+
+			  <div style ="width:100px;margin-left:16em;display:none" id = "opcion-registros">
+                <h6 style = "margin-left:2em;width:120px;font-size:15px;">Tipo de registro</h6>
+
+                
+                <select id = "select-registro"  onchange ="seleccionar2();" style = "background-color:#6c757d;color:white;width:270px;height:40px;margin-left:-1em;font-size:16px">
+                          <option value="" selected>Seleccione...</option>
+                          <option value="1" >Registros individuales</option>
+                          <option value="2" >Registros masivos</option>
+                          </select>
+                </div>
+              </div>
+
+             
+                </div>
+</div>
+    
+                
+                
+               
+                
+                <div>
+                    
+                </div>
+                <br><br><br>
+                
+                    
+                <style>
+                  .form-select{
+                    background-color:#6c757d;
+                    color:white;
+                  }
+                </style>
+            
+           
+                
+
+            <div class="container" id = "oldForm" style = "display:none">
+<div action="<?= $server; ?>administrador/rednodo/cambios/class.cambios.php" method="POST" enctype="multipart/form-data" id="form_solicitar" class="formulario">
+       
+<table class="table table-striped">
+            <tbody>
+               
+                <tr>
+                    <th class="aright">Descripción:</th>
+                    <td class="aleft">
+                        <textarea id="descripcion" name="descripcion"
+                                  cols="60"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                  <th class="aright">Archivo:</th>
+                  <td class="aleft"><input type="file" name="archivo" id="archivo" ></td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input type="hidden" name="q" value="crear_solicitud" />
+                        <button id="request" type="submit" class="btn btn-primary">Solicitar</button>
+                        <a class="btn" href="usuario.php?op=1102" title="Regresar">
+                            <i class="icon-arrow-left"></i> Regresar
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+				</div>
+
+</div>
+
+<!-- formulario para registros individuales -->
+
+<div>
+<div>
+
+
+<div id = "formularioRI1" style = "padding-bottom-10em;display:none">
+
+
+<section style = "margin-left:-28em;height:300px;margin-top:-7em" class="contact">
+
+    <div class="container" style = "height:300px">
+    <img  style = "position:absolute;margin-left:11em;height:300px;width:950px" src="<?= $server; ?>/administrador/rednodo/cambios/Fondo-gris-02.jpg" alt="">
+
+        <div class="contactForm" style ="color:black;height:500px">
+        
+            <h2 style  = "margin-left:-6em;color:black;">Formulario</h2>
+
+            
+            <div style = "width:900px;margin-left:-10em;"class="formBox" action="<?= $server; ?>administrador/rednodo/cambios/class.cambios.php" method="POST" />
+               
+          
+                
+                
+                <div style = "display">
+                
+               
+				<div style = "display:flex;margin-top:2em;">
+                <div class="inputBox w100" >
+                    <textarea name = "descripcion"  required style = "width:700px;color:black"></textarea>
+                    <span>Descripcion</span>
+                </div>
+                </div>
+                <div style = "">
+  <label for="formFileLg" class="form-label">Archivo:</label>
+  <input style = "width:700px" class="form-control form-control-lg" id="formFileLg" required type="file">
+</div>
+                     
+
+               
+                
+            
+        </div>
+    </div>
+    <canvas></canvas>	
+</section>
+<br><br><br><br><br><br><br><br><br>
+
+
+
+
+<div id = "formularioRI" style = "padding-bottom-10em">
+
+<div style = "margin-left:-28em;margin-top:-2em;" class="contact">
+
+
+    <div class="container" style = "height:300px">
+       <img  style = "position:absolute;margin-left:11em;height:320px;width:950px" src="<?= $server; ?>/administrador/rednodo/cambios/Fondo-gris-02.jpg" alt="">
+        <div class="contactForm" style ="color:black;background-image:url();height:320px">
+        <div  onclick = "funcionRemover()" id = "<?php $n = 0; $n+=1; echo $n;?>" style = "width:50px;margin-left:100%;margin-top:-4em;" >
+<svg id="botonXForm" style = "cursor:pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+</svg>
+</div>
+            <h2 style  = "margin-left:-6em;color:black;">Ingrese los siguientes datos</h2>
+
+            
+            <div style = "width:900px;margin-left:-10em;margin-top:2em;"class="formBox">
+               
+            <div style = "display:flex;width:1000px;">
+                <div class="inputBox w50" style = "width:200px">
+                    <input style ="color:black;height:30px" type="text" required style = "width:200px" name = "nroReporte">
+                    <span style = "margin-top:-0.4em">Numero del reporte</span>
+                </div>
+                <div class="inputBox w50" style = "width:200px;margin-left:5em">
+                    <input style ="color:black;height:30px" type="text" required style = "width:200px" name = "cedulaDeudor">
+                    <span style = "margin-top:-0.3em">cedula del deudor</span>
+                </div>
+                <div  class="inputBox w50" style = "width:200px;margin-left:5em"">
+                    <input style ="color:black;height:30px" style ="color:black" type="date" style = "width:100px" name = "fecha" >
+                    <span >Fecha de recuperacion</span>
+                </div>
+            </div>
+                
+                
+                <div style = "display:flex;margin-top:2em;">
+                <div class="inputBox w100" >
+                  
+                </div>
+                <div style = "margin-left:-3em;margin-top:0em">
+  
+  <div style = "width:50px:height:50px;margin-top:10px">
+  
+</div>
+</div>
+                     
+                </div>
+               
+                <div class="inputBox w100">
+                    <input name = "q" type="submit" value="crear_solicitud">
+                </div>
+			
+        </div>
+    </div>
+   
+				</div>
+
+</div>
+   
+
+</div>
+<br><br>
+</div>
+
+
+                            </div>
+				</div>
+				
+
+<!-- div copia donde se ingresan los formularios añadidos con el boton (agregar nuevo registro) -->
+	
+
+<div style = "margin-left:-50em;position:absolute;margin-top:5em;">
+<form action="<?= $server; ?>administrador/rednodo/cambios/class.cambios.php" method="POST" enctype="multipart/form-data" id="form_solicitar" class="formulario">
+
+<br><br>
+<div>
+	
+<div id = "copia" style = "display:flex;flex-direction:column;margin-left:10em">
+
+</div>
+</div>
+
+ </form>
+ <div id = "botonAgregar" style ="margin-left:50em;margin-top:-4em;">
+
+ <div id = "div-botonRegistro" style = "display:none;" style = "margin-left:-10em">
+ 
+<label id = "label-registro" style = "margin-top:-48em;margin-left:25em"  for="">Agregar nuevo registro</label>
+<svg style = "margin-left:29em;float:left" id = "añadirRegistro"style = "cursor:pointer;" xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+</svg>
+
+</div>
+
+ </div>
+</div>
+          </div>
+
+
+
+ 
+<!-- div copia donde se ingresan los formularios añadidos con el boton (agregar nuevo registro) -->
+
+
+
+
+<br><br><br><br><br><br>
+
+<div id = "div-botonRegistro" style = "display:none;" style = "margin-left:2em;">
+<label id = "label-registro"  style = "margin-top:15em;margin-left:25em"  for="">Agregar nuevo registro</label>
+<svg style = "margin-left:29em" id = "añadirRegistro"style = "cursor:pointer;" xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+</svg>
+
+</div>
+<br><br>
+</div>
+
+
+
+
+                          
+
+<div style = "display:block;width:600px;margin-left:40em;margin-top:-5em;" id = "formularioM"  style = "width:1000px;margin-top:5em;margin-left:-2em;height:300px;">
+               
+
+
+<section style = "margin-left:-13em;height:300px;margin-top:2em" class="contact">
+
+    <div class="container">
+    <img  style = "position:absolute;margin-left:11em;height:450px;width:630px" src="<?= $server; ?>/administrador/rednodo/cambios/Fondo-gris-02.jpg" alt="">
+
+        <div class="contactForm" style ="color:black:height:350px">
+        
+            <h2 style  = "margin-left:-6em;color:black;">Formulario</h2>
+
+            
+            <form style = "width:900px;margin-left:-10em;"class="formBox" action="<?= $server; ?>administrador/rednodo/cambios/class.cambios.php" method="POST" />
+               
+          
+                
+                
+                <div style = "display">
+                
+               
+				<div style = "display:flex;margin-top:2em;">
+                <div class="inputBox w100" >
+                    <textarea  required style = "width:400px;color:black"></textarea>
+                    <span>Descripcion</span>
+                </div>
+                </div>
+                <div style = "">
+  <label for="formFileLg" class="form-label">Archivo:</label>
+  <input style = "width:400px" class="form-control form-control-lg" id="formFileLg" required type="file">
+</div>
+                     
+
+               
+                <div class="inputBox w100" style = "margin-top:5em;">
+                    <input type="submit" value="Solicitar" id = "boton-solicitar" style = "display:block">
+                </div>
+            </form>
+        </div>
+    </div>
+    <canvas></canvas>	
+</section>
+
+            
+
+               
+                                     
+                    
+      
+        
+    </form>
+
+</div>
+
+        </div>
+             </div>
+
+</div>
+</div>
+
+<br><br>
+</div>
+
+
+<style>
+  body{
+		font-family: 'Nunito', sans-serif;
+
+    background-color: white;
+}
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: 'Nunito', sans-serif;
+}
+
+section {
+	position: relative;
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.container {
+	position: relative;
+	height: 520px;
+	width: 1100Px;
+	z-index: 1;
+}
+.container .contactInfo {
+	position: absolute;
+	top: 40px;
+	width: 350px;
+	height: calc(100% - 80px);
+	background-color: #535EE9;
+	padding:  40px;
+	border-radius: 5px;
+	justify-content: center;
+	flex-direction: column;
+	justify-content: space-between;
+	box-shadow: 0 20px 25px rgba(0,0,0,0.15);
+	z-index: 2;
+}
+.container .contactInfo h2 {
+	position: relative;
+	color:  rgba(255,255,255,1);
+	font-size: 24px;
+	font-weight: 700;
+}
+.container .contactInfo ul.info {
+	position: relative;
+	margin: 20px 0;
+}
+.container .contactInfo ul.info li {
+	position: relative;
+	list-style: none;
+	display: flex;
+	margin: 25px 0;
+	cursor: pointer;
+	align-items: flex-start;
+}
+.container .contactInfo ul.info li span:nth-child(1) {
+	min-width: 30px;	
+}
+.container .contactInfo ul.info li span:nth-child(1) i {
+	color: rgba(255,255,255,0.2);
+}
+.container .contactInfo ul.info li span:nth-child(2) {
+	color: rgba(255,255,255,0.2);
+	margin-left: 10px;
+	font-weight: 500;
+	transition: all 0.5s ease;
+}
+.container .contactInfo ul.info li span:nth-child(2) a {
+	text-decoration: none;
+	color:  rgba(255,255,255,0.2);
+	transition: all 0.5s ease;
+}
+.container .contactInfo ul.info li span:nth-child(2):hover,
+.container .contactInfo ul.info li span:nth-child(2):hover a
+ {
+	color: rgba(255,255,255,1);
+}
+.container .contactInfo ul.sci {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	margin-top: calc(100% - 150px);;
+	padding: 0 15px;
+}
+.container .contactInfo ul.sci li:hover:before {
+	content: '';
+	position: absolute;
+	background-size: 40px 40px;
+	width: 40px;
+	height: 40px;
+	top: -1px;
+	left: -1px;
+	border-radius: 50%;
+	transition: all 0.2s ease;
+}
+.container .contactInfo ul.sci li:nth-child(1):hover:before {
+	background-image: url('https://github.com/JackCree/portfolio2021/blob/master/img/icones/behance.png?raw=true');
+}
+.container .contactInfo ul.sci li:nth-child(2):hover:before {
+	background-image: url('https://github.com/JackCree/portfolio2021/blob/master/img/icones/deviantart.png?raw=true');
+}
+.container .contactInfo ul.sci li:nth-child(3):hover:before {
+	background-image: url('https://github.com/JackCree/portfolio2021/blob/master/img/icones/instagram.png?raw=true');
+}
+.container .contactInfo ul.sci li:nth-child(4):hover:before {
+	background-image: url('https://github.com/JackCree/portfolio2021/blob/master/img/icones/dribbble.png?raw=true');
+}
+.container .contactInfo ul.sci li:nth-child(5):hover:before {
+	background-image: url('https://github.com/JackCree/portfolio2021/blob/master/img/icones/twitter.png?raw=true');
+}
+.container .contactInfo ul.sci li:hover i {
+	opacity: 0;
+}
+.container .contactInfo ul.sci li {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	list-style: none;
+	width:  40px;
+	height:  40px;
+	border: 1px solid rgba(255,255,255,1);
+	border-radius: 50%;
+	transition: all 0.2s ease;
+}
+.container .contactInfo ul.sci li i {
+	position: relative;
+	font-size: 20px;
+	color:  rgba(255,255,255,1);
+}
+.container .contactForm {
+	position: absolute;
+	padding:  70px 50px;
+	padding-left: 250px;
+	margin-left: 150px;
+	width: calc(100% - 150px);
+	
+	background: rgba(255,255,255,0.1);
+	backdrop-filter:  blur(10px);
+	border-radius: 5px;
+	border-left: 1px solid rgba(255,255,255,0.25);
+	border-top: 1px solid rgba(255,255,255,0.25);
+	box-shadow: 0 10px 10px rgba(0,0,0,0.25);
+	z-index: 1;
+}
+.container .contactForm h2 {
+	color: rgba(255,255,255,1);
+	font-size: 24px;
+	font-weight: 700;
+}
+.container .contactForm .formBox {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	padding-top:  30px;
+}
+.container .contactForm .formBox .inputBox {
+	position: relative;
+	margin-bottom: 35px;	
+}
+.container .contactForm .formBox .inputBox.w50 {
+	width: 47%;
+}
+.container .contactForm .formBox .inputBox.w100 {
+	width: 100%;
+}
+.container .contactForm .formBox .inputBox input,
+.container .contactForm .formBox .inputBox textarea {
+	width: 100%;
+	resize: none;
+	padding: 5px 0;
+	font-size: 20px;
+	font-weight: 500;
+	color: rgba(255,255,255,1);
+	background: transparent;
+	border: none;
+	outline: none;
+	border-bottom: 1px solid #4da5f4;
+}
+.container .contactForm .formBox .inputBox textarea {
+	height:  120px;
+}
+.container .contactForm .formBox .inputBox span {
+	position: absolute;
+	left: 0;
+	padding: 5px 0;
+	pointer-events: none;
+	color: black;
+	font-size: 15px;
+	font-weight: 300;
+	transition: 0.5s ease;
+}
+.container .contactForm .formBox .inputBox input:focus ~ span,
+.container .contactForm .formBox .inputBox input:valid ~ span,
+.container .contactForm .formBox .inputBox textarea:focus ~ span,
+.container .contactForm .formBox .inputBox textarea:valid ~ span {
+	transform: translateY(-20px);
+	text-transform: uppercase;
+	font-size: 10px;
+}
+.container .contactForm .formBox .inputBox input[type="submit"] {
+	position: relative;
+	cursor: pointer;
+	background: #4da5f4;
+	color: rgba(255,255,255,1);
+	border: none;
+	max-width: 150px;
+	font-size: 15px;
+	padding: 10px;
+}
+.container .contactForm .formBox .inputBox input[type="submit"]:hover {
+	background: #7bc1ff;
+}
+canvas {
+	position: absolute;
+	z-index: 0;
+}
+@media (max-width: 1200px) {
+	.container {
+		display: flex;
+		width:  90%;
+		min-width: auto;
+		margin: 20px;
+		box-shadow: 0 20px 50px rgba(0,0,0,0.15);	
+	}
+	.container .contactInfo {
+		top: 0;
+		height: 550px;
+		position: relative;
+		box-shadow: none;
+	}
+	.container .contactForm {
+		position: relative;
+		width:  calc(100% - 350px);
+		padding-left: 0px;
+		margin-left: 0px;
+		padding:  40px;
+		height: 550px;
+		box-shadow: none;
+	}
+}
+@media (max-width: 991px) {
+	.container {
+		display: flex;
+		flex-direction: column-reverse;
+	}
+	.container .contactForm {
+		width: 100%;
+		height: auto;
+	}
+	.container .contactInfo {
+		width: 100%;
+		height: auto;
+		display: flex;
+		flex-direction: row;
+	}
+	.container .contactInfo .informations {
+		width:  40%;
+		margin: 0;
+	}
+	.container .contactInfo ul.sci {
+		position: relative;
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		padding: 0 45px;
+		margin-top: 40px;
+		width: 50%;
+	}
+}
+@media (max-width: 600px) {
+	.container .contactForm {
+		padding: 25px;
+	}
+	.container .contactInfo .informations {
+		width: 100%;
+	}
+	.container .contactInfo {
+		padding: 25px;
+		flex-direction: column;
+		align-items: flex-start;
+	}
+	.container .contactInfo ul.sci {
+		margin-top: 40px;	
+		width: 100%;	
+	}
+	.container .contactForm .formBox .inputBox.w50 {
+		width: 100%;
+	}
+} 
+</style>
+
+
+
+
+
+             <script>
+                
+                function seleccionar(){
+
+            let divOpciones = document.getElementById("div-opciones");
+            let copia = document.getElementById("copia");
+            let selectTipoRegistros = document.getElementById("opcion-registros");
+            let selectRegistro = document.getElementById("select-registro");
+            let opcion2 = selectRegistro.value;
+            let seleccionado = document.getElementById("operacion_id");
+            let opcion = seleccionado.value;
+            let form = document.getElementById("formularioRI1");
+            let OldForm = document.getElementById("oldForm")
+            let formularioMasivo = document.getElementById("formularioM");
+			let opcionesForm = document.getElementById("opciones-container");
+			let h1 = document.getElementById("principal-h1");
+
+          if(opcion == 10){
+            form.style.display = "none";
+            OldForm.style.display = "none";
+            selectTipoRegistros.style.display = "block";
+			opcionesForm.style.marginLeft = "-9.5em";
+            formularioMasivo.style.display = "none";
+			h1.style.marginLeft = "7.5em";
+          }else{
+            OldForm.style.display = "block";
+            copia.style.display = "none";
+            selectTipoRegistros.style.display = "none";
+            formularioMasivo.style.display = "none";
+            form.style.display = "none";
+          }
+          
+          
+          }
+          
+          function seleccionar2(){
+            let copia = document.getElementById("copia");
+            let selectTipoRegistros = document.getElementById("opcion-registros");
+            let selectRegistro = document.getElementById("select-registro");
+            let opcion2 = selectRegistro.value;
+            let seleccionado = document.getElementById("operacion_id");
+            let opcion = seleccionado.value;
+            let form = document.getElementById("formularioRI1");
+            let OldForm = document.getElementById("oldForm")
+            let formularioMasivo = document.getElementById("formularioM");
+            let divBotonRegistro = document.getElementById("div-botonRegistro");
+            let label = document.getElementById("label-registro");
+            if(opcion2 == 1){
+            divBotonRegistro.style.display = "block";    
+			
+            form.style.display = "block";
+            OldForm.style.display = "none";
+            formularioMasivo.style.display = "none";
+            copia.style.marginTop = "40em";
+			copia.style.marginLeft = "13em";
+            copia.style.display = "block";
+           
+
+          }else if(opcion2 == 2){
+            formularioMasivo.style.display = "block";
+            form.style.display = "none";
+            OldForm.style.display = "none";
+            copia.style.display = "none";
+			copia.load();
+            divBotonRegistro.style.display = "none";
+          }
+          }
+          
+            </script>
+
+          <script>
+        function clonarNodo(indice) {
+          
+ let copia = document.getElementById("copia");         
+ var original=document.getElementById("formularioRI");
+ var nuevo=original.cloneNode(true);
+ let botonX = document.getElementById("botonXForm");
+ let label = document.getElementById("label-registro");
+
+ nuevo.id=indice;
+ nuevo.style.marginTop = "6em";
+ nuevo.style.marginLeft = "50em";
+ label.style.marginTop = "13em"
+ copia.style.marginTop = "-12em";
+ destino=document.getElementById("copia");
+ destino.appendChild(nuevo);
+}
+
+let id = 0;   
+let id22 = 0;       
+let copiar = document.getElementById("añadirRegistro");
+let label = document.getElementById("label-registro");
+
+copiar.addEventListener("click",()=>{
+ clonarNodo("copiasForm");
+
+});
+</script>
+
+<script>
+ function funcionRemover(){
+   let copia = document.getElementById("copia");         
+
+   copia.removeChild(copia.lastElementChild);
+
+}
+</script>
+                   
+
+
+<script type="text/javascript" src="<?= $server; ?>administrador/rednodo/cambios/js/jquery-1.11.0.min.js"></script>
+<script type="text/javascript">
+$('#request').click(function(ev) {
+	/** funcion para validar y enviar los datos del formulario  */
+		ev.preventDefault();
+		 if (jQuery(this).hasClass('disabled')) {
+			alert('Hay un proceso en ejecución, por favor espere.');
+			return false;
+		} else {
+			jQuery(this).addClass('disabled');
+			jQuery(this).text('Procesando solicitud...');
+		}
+		
+		var operacion_id = jQuery('#operacion_id');
+		var descripcion = jQuery('#descripcion');
+		var entidad = jQuery('#entidad');
+		if (operacion_id.val().length < 1 || descripcion.val().length < 10) {
+			alert('Debe elegir una operaci\xF3n a ejecutar y el campo ' +
+				' descripci\xF3n debe tener m\xEDnimo 10 caracteres');
+			if (jQuery(this).hasClass('disabled')) {
+				jQuery(this).removeClass('disabled');
+				jQuery(this).text('Solicitar');
+
+			}
+			return false;
+		}
+            
+            var formData = new FormData($(".formulario")[0]);
+            $.ajax({
+				dataType: "json",
+            	url: '<?= $server; ?>administrador/rednodo/cambios/class.cambios.php',
+                type: 'POST',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success : function(respuesta){
+					alert(respuesta)
+					if (jQuery('#request').hasClass('disabled')) {
+						jQuery('#request').removeClass('disabled');
+						jQuery('#request').text('Solicitar');
+					}
+					operacion_id.val('');
+                    descripcion.val('');
+					entidad.val('');
+				}
+				
+            });
+    });
+</script>
+</body>
+</html>
